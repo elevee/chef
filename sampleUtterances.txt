@@ -1,0 +1,8 @@
+RecipeIntent {Recipe}
+RecipeIntent Go to {Recipe}
+RecipeIntent Let's cook {Recipe}
+RecipeIntent Let's cook some {Recipe}
+RecipeIntent How about {Recipe}
+RecipeIntent Start {Recipe}
+AMAZON.HelpIntent Tell me those recipe names again
+AMAZON.HelpIntent What are the recipe names again
