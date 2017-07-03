@@ -1,11 +1,11 @@
 {
 	"intents" : [
 		{
-			"intent": "ReindeerIntent",
+			"intent": "RecipeIntent",
 			"slots": [
 				{
-					"name": "Reindeer",
-					"type": "LIST_OF_REINDEER"
+					"name": "Recipe",
+					"type": "AMAZON.Food"
 				}
 			]
 		},
@@ -23,6 +23,6 @@
 		},
 		{
 			"intent": "AMAZON.CancelIntent"
-		},
+		}
 	]
 }

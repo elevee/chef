@@ -82,13 +82,23 @@ function onIntent(intentRequest, session, callback) {
 
     var intent = intentRequest.intent
     var intentName = intentRequest.intent.name;
-
+    
     // dispatch custom intents to handlers here
-    if (intentName == "GetInfoIntent") {
-        handleGetInfoIntent(intent, session, callback)
-    } else {
-         throw "Invalid intent"
+    switch(intentName){
+        case "GetInfoIntent":
+            handleGetInfoIntent(intent, session, callback);
+            break;
+        case "RecipeIntent": //user wants to load in/start a recipe
+            handleStartRecipeIntent(intent, session, callback);
+            break;
+        default:
+            throw "Invalid intent";
     }
+    // if (intentName == "GetInfoIntent") {
+    //     handleGetInfoIntent(intent, session, callback)
+    // } else {
+    //      throw "Invalid intent"
+    // }
 }
 
 /**
@@ -122,6 +132,11 @@ function getWelcomeResponse(callback) {
 function handleGetInfoIntent(intent, session, callback) {
 
 
+}
+
+function handleStartRecipeIntent(intent, session, callback) {
+    //query DB for a record that matches intent string with title.
+    //if it returns 1 record, load it into the session
 }
 
 
