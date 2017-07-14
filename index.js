@@ -82,7 +82,8 @@ function onIntent(intentRequest, session, callback) {
 
     var intent = intentRequest.intent
     var intentName = intentRequest.intent.name;
-    
+    console.log("intent is ", intentRequest.intent);
+    console.log("Intentname is ", intentName);
     // dispatch custom intents to handlers here
     switch(intentName){
         case "GetInfoIntent":
@@ -125,7 +126,7 @@ function getWelcomeResponse(callback) {
         "repromptText" : reprompt
     }
 
-    callback(sessionAttributes, buildSpeechletResponse(header, speechOutput, reprompt, shouldEndSession))
+    callback(sessionAttributes, buildSpeechletResponse(header, speechOutput, reprompt, shouldEndSession));
 
 }
 
@@ -135,8 +136,19 @@ function handleGetInfoIntent(intent, session, callback) {
 }
 
 function handleStartRecipeIntent(intent, session, callback) {
+    //if recipe in progress (check session)
+
     //query DB for a record that matches intent string with title.
     //if it returns 1 record, load it into the session
+
+    var speechOutput = "Starting recipes in the club, are we?";
+    var reprompt = "Well?";
+    var sessionAttributes = {
+        "speechOutput" : speechOutput,
+        "repromptText" : reprompt
+    }
+    var shouldEndSession = false;
+    callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
 }
 
 

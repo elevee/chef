@@ -4,7 +4,8 @@
   "description": "Alexa skill for home chefs",
   "main": "index.js",
   "dependencies": {
-    "alexa-sdk": "^1.0.10"
+    "alexa-sdk": "^1.0.10",
+    "aws-sdk": "^2.84.0"
   },
   "devDependencies": {},
   "scripts": {
