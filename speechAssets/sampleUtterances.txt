@@ -4,5 +4,26 @@ RecipeIntent Let's cook {Recipe}
 RecipeIntent Let's cook some {Recipe}
 RecipeIntent How about {Recipe}
 RecipeIntent Start {Recipe}
-AMAZON.HelpIntent Tell me those recipe names again
-AMAZON.HelpIntent What are the recipe names again
+RecipeIntent Start recipe {Recipe}
+RecipeIntent Cook {Recipe}
+RepeatIntent What step am I on
+RepeatIntent What is the step
+RepeatIntent What do I have to do
+RepeatIntent What do I need to do
+RepeatIntent What step
+RepeatIntent What
+RepeatIntent Repeat
+RepeatIntent Could you repeat that
+RepeatIntent What did you say
+NextIntent Next step
+NextIntent What's next
+NextIntent What now
+NextIntent Done
+NextIntent I'm done
+NextIntent I'm done with the step
+NextIntent I'm done with the
+PreviousIntent Previous step
+PreviousIntent Go back
+PreviousIntent Back
+PreviousIntent Last step
+PreviousIntent What was the last step

@@ -1,28 +1,37 @@
 {
-	"intents" : [
-		{
-			"intent": "RecipeIntent",
-			"slots": [
-				{
-					"name": "Recipe",
-					"type": "AMAZON.Food"
-				}
-			]
-		},
-		{
-			"intent": "AMAZON.YesIntent"
-		},
-		{
-			"intent": "AMAZON.NoIntent"
-		},
-		{
-			"intent": "AMAZON.HelpIntent"
-		},
-		{
-			"intent": "AMAZON.StopIntent"
-		},
-		{
-			"intent": "AMAZON.CancelIntent"
-		}
-	]
+  "intents": [
+    {
+      "slots": [
+        {
+          "name": "Recipe",
+          "type": "AMAZON.Food"
+        }
+      ],
+      "intent": "RecipeIntent"
+    },
+    {
+      "intent": "RepeatIntent"
+    },
+    {
+      "intent": "PreviousIntent"
+    },
+    {
+      "intent": "NextIntent"
+    },
+    {
+      "intent": "AMAZON.YesIntent"
+    },
+    {
+      "intent": "AMAZON.NoIntent"
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+    {
+      "intent": "AMAZON.CancelIntent"
+    }
+  ]
 }

@@ -5,7 +5,9 @@
   "main": "index.js",
   "dependencies": {
     "alexa-sdk": "^1.0.10",
-    "aws-sdk": "^2.84.0"
+    "aws-sdk": "^2.84.0",
+    "dotenv": "^4.0.0",
+    "dynasty": "^0.2.7"
   },
   "devDependencies": {},
   "scripts": {
