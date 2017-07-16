@@ -229,6 +229,28 @@ function handleRepeatIntent(intent, session, callback) {
     callback(s, buildSpeechletResponseWithoutCard(speechOutput, "What was that?", false));
 }
 
+function handlePreviousIntent(intent, session, callback) {
+    let speechOutput = "Please select a recipe first. Use the keyword start, with the recipe name";
+    let shouldEndSession = false;
+    let s = session.attributes;
+    if(s && s.currentRecipe && s.currentSection && typeof s.currentStep !== "undefined"){
+        if(s.currentStep === 0){
+            if (s.currentSection === "Instructions"){ //if we are on first step of instructions, move back to ingredients.
+                s.currentSection = "Ingredients";
+                s.currentStep = s.currentRecipe[s.currentSection].length - 1;
+                speechOutput = s.currentRecipe[s.currentSection][s.currentStep];
+            } else { //we are on first step of ingredients
+                speechOutput = "This is the start of the recipe.";
+            }
+        } else if (s.currentStep > 0){ //move to previous step, decrement currentStep
+            s.currentStep--;
+            speechOutput = s.currentRecipe[s.currentSection][s.currentStep];
+        } else { //this shouldn't happen!
+            // console.log("ELSE CASE! ");
+        }
+    }
+    callback(s, buildSpeechletResponseWithoutCard(speechOutput, "What was that?", shouldEndSession));
+}
 
 function handleNextIntent(intent, session, callback) {
     let speechOutput = "Please select a recipe first. Use the keyword start, with the recipe name";
@@ -245,6 +267,7 @@ function handleNextIntent(intent, session, callback) {
                 }
             } else { //if we are on last step of instructions, finish the recipe and close session.
                 shouldEndSession = true;
+                s.currentStep++;
                 speechOutput = "Nice job! You're done with the recipe.";
             }
         } else if (s.currentStep < s.currentRecipe[s.currentSection].length){ //move to next step, increment currentStep
