@@ -5,8 +5,8 @@ const credentials = require("./config.json");
 
 // console.log("creds: ", creds);
 // var credentials = {
-//     accessKeyId: "AKIAI3SSZHBYP7XR45AA",//process.env.AWS_ACCESS_KEY,
-//     secretAccessKey: "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",//process.env.AWS_SECRET_ACCESS_KEY,
+//     accessKeyId: process.env.AWS_ACCESS_KEY,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 //     region: 'us-east-1'
 // };
 // console.log("credentials", creds);
