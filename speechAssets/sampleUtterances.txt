@@ -3,6 +3,7 @@ RecipeIntent Go to {Recipe}
 RecipeIntent Let's cook {Recipe}
 RecipeIntent Let's cook some {Recipe}
 RecipeIntent How about {Recipe}
+RecipeIntent To start {Recipe}
 RecipeIntent Start {Recipe}
 RecipeIntent Start recipe {Recipe}
 RecipeIntent Cook {Recipe}

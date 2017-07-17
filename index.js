@@ -12,7 +12,7 @@
 // console.log("Loading Chef function...");
 // require('dotenv').config();
 
-const creds = require("./config.json");
+const credentials = require("./config.json");
 const Alexa = require('alexa-sdk');
 const AWS = require('aws-sdk');
 // const credentials = {
@@ -59,8 +59,8 @@ exports.handler = function (event, context) {
                 event.session,
                 function callback(sessionAttributes, speechletResponse) {
                     context.succeed(buildResponse(sessionAttributes, speechletResponse));
-                    console.log("Session Attributes for Response: ", sessionAttributes);
-                    console.log("Speechlet Response: ", speechletResponse);
+                    // console.log("Session Attributes for Response: ", sessionAttributes);
+                    // console.log("Speechlet Response: ", speechletResponse);
                 });
         } else if (event.request.type === "SessionEndedRequest") {
             onSessionEnded(event.request, event.session);
@@ -76,7 +76,29 @@ exports.handler = function (event, context) {
  */
 function onSessionStarted(sessionStartedRequest, session) {
     // add any session init logic here
+    console.log("USERID: ", session.user.userId);
+    handleNewUserIfNeccessary(session.user.userId);
 }
+
+function handleNewUserIfNeccessary(userId){
+    console.log("Session Started!");
+    const dynasty = require('dynasty')(credentials), // Set up Dynasty with the AWS credentials
+    recipes = dynasty.table('Recipes'); // Get the Dynasty recipe table object
+    if (!recipes.find(userId)){ //if userId not in DB, create an item
+        console.log("USERID NOT IN DB!");
+        let initialUser = {
+            _userId: userId,
+            _currentRecipe: "undefined"
+        };
+        recipes.insert(initialUser, function(err, resp) {
+            if(err){
+                let msg = "There was a problem adding you to the Database."
+                buildSpeechletResponseWithoutCard(msg, null, true)
+            }
+        });
+    }
+}
+
 
 /**
  * Called when the user invokes the skill without specifying what they want.
@@ -133,7 +155,7 @@ function getWelcomeResponse(callback) {
 
     var reprompt = "What was that?"
 
-    var header = "Get Info" //if using cards in Alexa app
+    //var header = "Get Info" //if using cards in Alexa app
 
     var shouldEndSession = false
 
@@ -142,13 +164,12 @@ function getWelcomeResponse(callback) {
         "repromptText" : reprompt
     }
 
-    callback(sessionAttributes, buildSpeechletResponse(header, speechOutput, reprompt, shouldEndSession));
+    callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
 
 }
 
 function handleHelpIntent(intent, session, callback) {
     console.log("session is ", session);
-    console.log("intent is ", intent);
     let speechOutput = "Please choose a recipe.";
     let reprompt = "What was that?";
     if (session["currentRecipe"]){
@@ -166,49 +187,46 @@ function handleHelpIntent(intent, session, callback) {
 
 function handleStartRecipeIntent(intent, session, callback) {
     //if recipe in progress (check session)
-
-    //query DB for a record that matches intent string with title.
-    //if it returns 1 record, load it into the session
-
-    // let scanningParameters = {
-    //     TableName: "Recipes",
-    //     Name: "Citrus Glaze"
-    // };
-
-    const dynasty = require('dynasty')(creds), // Set up Dynasty with the AWS credentials
+    let userId = session.user.userId;
+    const dynasty = require('dynasty')(credentials), // Set up Dynasty with the AWS credentials
     recipes = dynasty.table('Recipes'); // Get the Dynasty recipe table object
-    let queryTerm = toTitleCase(intent.slots.Recipe.value);
+    let queryTerm = replaceSpacesAndUnderscores(intent.slots.Recipe.value.trim());
 
-    recipes.find(queryTerm)
-    .then(function(resp){
-        // console.log(resp);
-        let speechOutput = {
-            type: "SSML",
-            ssml: "<speak>Starting "+resp.Name+" recipe.<break time='3s'/>"
-        };
-        // let speechOutput = "Starting the recipe.";
-         //Proceed to first ingredient
-        let firstIngredient = "Prep the Ingredients: <break time='1s'/>"+resp.Ingredients[0]+"</speak>";
-        speechOutput["ssml"] += firstIngredient;
+    recipes.find(userId) //query DB for user item
+        .then(function(resp){
+            console.log("RESPONSE IS: ", resp);
+            let r = resp[queryTerm];
+            console.log("Recipe should be: ", r);
+            if(!r){
+                buildSpeechletResponseWithoutCard("I didn't find that recipe in your collection. Please try again.", null, true);
+            }
+            let speechOutput = {
+                type: "SSML",
+                ssml: "<speak>Starting "+r.displayName+" recipe.<break time='3s'/>"
+            };
+            // let speechOutput = "Starting the recipe.";
+             //Proceed to first ingredient
+            let firstIngredient = "Prep the Ingredients: <break time='1s'/>"+resp.ingredients[0]+"</speak>";
+            speechOutput["ssml"] += firstIngredient;
 
-        let reprompt = "Well?";
-        let sessionAttributes = {
-            "outputSpeech" : speechOutput,
-            "repromptText" : reprompt,
-            "currentRecipe": resp,
-            "currentSection" : "Ingredients",
-            "currentStep"   : 0
-        };
-        let shouldEndSession = false;
-        
-       
-        // sessionAttributes["speechOutput"]["ssml"] += "Prep the Ingredients: <break time='2s'/> "+resp.Ingredients[sessionAttributes["currentStep"]]+"</speak>";
-        // sessionAttributes["speechOutput"]["ssml"] += firstIngredient;
-        
-        // sessionAttributes["speechOutput"] = "blerg";
-        console.log("SpeechOutput is being passed as ", speechOutput);
-        callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
-    });
+            let reprompt = "Well?";
+            let sessionAttributes = {
+                "outputSpeech" : speechOutput,
+                "repromptText" : reprompt,
+                "currentRecipe": resp,
+                "currentSection" : "Ingredients",
+                "currentStep"   : 0
+            };
+            let shouldEndSession = true;
+            
+           
+            // sessionAttributes["speechOutput"]["ssml"] += "Prep the Ingredients: <break time='2s'/> "+resp.Ingredients[sessionAttributes["currentStep"]]+"</speak>";
+            // sessionAttributes["speechOutput"]["ssml"] += firstIngredient;
+            
+            // sessionAttributes["speechOutput"] = "blerg";
+            // console.log("SpeechOutput is being passed as ", speechOutput);
+            callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
+        });
 
     // docClient.scan(scanningParameters, function(err, data){
     //     if(err){
@@ -297,7 +315,7 @@ function formatOutputSpeech(output){
 }
 
 function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
-    console.log("OUTPUT BEFORE BUILDSPEECH IS", output);
+    // console.log("OUTPUT BEFORE BUILDSPEECH IS", output);
     return {
         outputSpeech: formatOutputSpeech(output),
         card: {
@@ -316,7 +334,7 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
 }
 
 function buildSpeechletResponseWithoutCard(output, repromptText, shouldEndSession) {
-    console.log("OUTPUT BEFORE BUILDSPEECHWITHOUTCARD IS", output);
+    // console.log("OUTPUT BEFORE BUILDSPEECHWITHOUTCARD IS", output);
     return {
         outputSpeech: formatOutputSpeech(output),
         reprompt: {
@@ -343,4 +361,8 @@ function capitalizeFirst(s) {
 
 function toTitleCase(str){ //capitalizes first letter of each word
     return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+}
+
+function replaceSpacesAndUnderscores(string){
+    return string.split(' ').join('_') //supposed to be faster than using RE. But that may only be in browsers.
 }
