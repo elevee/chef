@@ -1,7 +1,15 @@
-require('dotenv').config();
+// require('dotenv').config();
 // var fs = require('fs');
 
 const credentials = require("./config.json");
+
+var AWS = require('aws-sdk');
+AWS.config.update({
+  region: "us-east-1"
+});
+var DB 	= new AWS.DynamoDB.DocumentClient();
+
+
 
 // console.log("creds: ", creds);
 // var credentials = {
@@ -13,10 +21,10 @@ const credentials = require("./config.json");
 // console.log("accessKeys identical?", credentials.accessKeyId === creds.accessKeyId);
 // console.log("secretKeys identical?", credentials.secretAccessKeyId === creds.secretAccessKeyId);
 
-var dynasty = require('dynasty')(credentials), // Set up Dynasty with the AWS credentials
+// var dynasty = require('dynasty')(credentials), // Set up Dynasty with the AWS credentials
 	// recipes = dynasty.table('Recipes'); // Get the Dynasty recipe table object
-	recipes = dynasty.table('Recipes'), // Get the Dynasty recipe table object
-	userId 	= "testUser123";
+
+var userId 	= "testUser123";
 
 // console.log("recipestable: ", recipes);
 
@@ -36,7 +44,7 @@ var dynasty = require('dynasty')(credentials), // Set up Dynasty with the AWS cr
 // 	});
 
 var initialUser = {
-	_userId: "charles",
+	_userId: "livan_hernandez",
 	_currentRecipe: "undefined"
 }
 
@@ -52,6 +60,25 @@ var cg = {
 	    "Spread about 1 teaspoon of the glaze onto each cookie leaving, a 1/4-inch border around the edge.",
 	    "Allow the glaze to harden for about 45 minutes before serving."
 	  ],
+	  "currentSection": "ingredients",
+	  "currentStep": 0,
+	  "displayName": "Citrus Glaze"
+	}
+};
+
+var cg1 = {
+	"best_citrus_glaze": {
+	  "ingredients": [
+	    "1 1/3 cups powdered sugar",
+	    "2 large limes, zested",
+	    "3 tablespoons fresh lemon juice"
+	  ],
+	  "instructions": [
+	    "In a medium bowl, whisk together the powdered sugar, lime zest, and lemon juice until smooth.",
+	    "Spread about 1 teaspoon of the glaze onto each cookie leaving, a 1/4-inch border around the edge.",
+	    "Allow the glaze to harden for about 45 minutes before serving."
+	  ],
+	  "currentSection": "ingredients",
 	  "currentStep": 0,
 	  "displayName": "Citrus Glaze"
 	}
@@ -90,6 +117,7 @@ var cookies = {
 	    "Bake until light golden around the edges, 15 to 20 minutes.",
 	    "Cool for 10 minutes and transfer to a cooling rack to cool completely, about 15 minutes."
   		],
+  	  "currentSection": "ingredients",
       "currentStep": 0,
       "displayName": "Lime and Cornmeal Cookies"
     }
@@ -99,26 +127,26 @@ var cookies = {
 // Need to be able to find:
 
 // What recipe fools are on
-// recipes.find("testUser123")
+// recipes.find(userId)
 // 	.then(function(resp){
 // 		console.log(resp[resp["_currentRecipe"]]);
 // 	});
 
 // What step of the recipe they're on
-// recipes.find("testUser123")
+// recipes.find(userId)
 // 	.then(function(resp){
 // 		console.log(resp[resp["_currentRecipe"]].currentStep);
 // 	});
 
 // Repeat ingredient?
-// recipes.find("testUser123")
+// recipes.find(userId)
 // 	.then(function(resp){
 // 		var r = resp[resp["_currentRecipe"]];
 // 		console.log(r.ingredients[r.currentStep]);
 // 	});
 
 // How much sugar?
-// recipes.find("testUser123")
+// recipes.find(userId)
 // 	.then(function(resp){
 // 		var r = resp[resp["_currentRecipe"]];
 // 		var ingredients = r.ingredients;
@@ -137,53 +165,110 @@ var cookies = {
 //         console.log(resp);
 //     });
 
+var searchTerm = "citrus_glaze";
+
+// recipes
+// 	.find(userId)
+// 	.then(function(resp){
+// 		var r = resp[searchTerm];
+// 		// console.log(r);
+// 		r["currentStep"]++;
+// 		r["currentSection"] = "instructions";
+// 		recipes.update(userId, {
+// 			searchTerm: r
+// 		}) 
+// 	    .then(function(resp) {
+// 	        console.log(resp);
+// 	    });
+// 	});
+
 // TRADITIONAL NODE CALLBACK WITH ERROR
 // recipes.update(userId, cookies, function(err, resp) {
 //     console.log(resp);
 // });
 
 // -------------------------------------------------------------------------------
+var table = "Recipes";
+// get a user record
+// var params = {
+//     TableName: table,
+//     Key:{
+//         "_userId": userId
+//     }
+// };
 
-// recipes.find("testUser123")
-// 	.then(function(resp){
-// 		console.log(resp);
-// 		// for(var i=0,j=resp.recipes.length; i<j; i++){
-// 		// 	console.log(resp.recipes[i].displayName);
-// 		// }
-// 	});
-
-// users.find("Citrus Glaze")
-// 	.then(function(resp){
-// 		console.log(resp);
-// 		console.log(resp.Name);
-// 		// console.log(resp[]);
-// 	});
-
-// recipes.find(userId)
-// 	.then(function(recipe){
-// 		console.log(recipe);
-// 	});
-
-recipes.insert(initialUser, function(err, resp) {
-	if(err){
-		console.log(err);
-	}
-	console.log(resp);
-});
-
-// recipes.find(userId, function(err, resp) { //query DB for user item
-// 	console.log(resp);
-// 	console.log(err);
+// DB.get(params, function(err, data) {
+//     if (err) {
+//         console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+//     } else {
+//         console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+//     }
 // });
 
-// recipes.find(userId)
-// 	.then(function(user, err){
-// 		console.log(err);
-// 	})
-
-
-// or use a simple callback function instead of promise
-// recipes.find(userId, function(err, recipe){
-	// console.log(recipe);
-	// console.log(recipe.ingredients);
+// get a recipe
+// var params = {
+//     TableName: table,
+//     Key:{
+//         "_userId": "dink" //userId
+//     }
+// };
+// DB.get(params, function(err, data) {
+//     if (err) {
+//         console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+//     } else {
+//         var r = JSON.stringify(data,null,2);
+//         console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+//         console.log(`Data exists? ${JSON.stringify(data["Item"])}`);
+//         // console.log(`Returned ${data} record`);
+//     }
 // });
+
+// add a new Recipe
+// edit a step inside a recipe (currentStep)
+var newStep = 1;
+
+// var params = {
+//   TableName: table,
+//   Key: { "_userId" : userId },
+//   UpdateExpression: 'set #a.currentStep = :s',
+//   // ConditionExpression: '#a < :MAX',
+//   ExpressionAttributeNames: {'#a': searchTerm},
+//   ExpressionAttributeValues: {
+//     ':s' : newStep
+//   },
+//   ReturnValues:"UPDATED_NEW"
+// };
+
+// console.log(params);
+
+// DB.update(params, function(err, data) {
+//    if (err) console.log(err);
+//    else console.log(data);
+// });
+
+// var newUser = "the_juice";
+// var params = {
+//   TableName: table,
+//   Item: initialUser
+// };
+
+// DB.put(params, function(err, data) {
+//   if (err) console.log(err);
+//   else console.log(data);
+// });
+
+// var params = {
+//     "TableName": table,
+//     "Key": key,
+    
+//     // A string that identifies one or more attributes to retrieve from the table. 
+//     // These attributes can include scalars, sets, or elements of a JSON document. 
+//     // The attributes in the expression must be separated by commas.
+//     // If no attribute names are specified, then all attributes will be returned. 
+//     // If any of the requested attributes are not found, they will not appear in the result.
+//     // "ProjectionExpression":"LastPostDateTime, Message, Tags", 
+
+//     "ConsistentRead": true,
+//     "ReturnConsumedCapacity": "TOTAL"
+// }
+

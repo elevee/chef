@@ -15,6 +15,13 @@
 const credentials = require("./config.json");
 const Alexa = require('alexa-sdk');
 const AWS = require('aws-sdk');
+
+
+AWS.config.update({
+  region: "us-east-1"
+});
+var DB  = new AWS.DynamoDB.DocumentClient();
+
 // const credentials = {
 //     accessKeyId: process.env.AWS_ACCESS_KEY,
 //     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -82,21 +89,39 @@ function onSessionStarted(sessionStartedRequest, session) {
 
 function handleNewUserIfNeccessary(userId){
     console.log("Session Started!");
-    const dynasty = require('dynasty')(credentials), // Set up Dynasty with the AWS credentials
-    recipes = dynasty.table('Recipes'); // Get the Dynasty recipe table object
-    if (!recipes.find(userId)){ //if userId not in DB, create an item
-        console.log("USERID NOT IN DB!");
-        let initialUser = {
-            _userId: userId,
-            _currentRecipe: "undefined"
-        };
-        recipes.insert(initialUser, function(err, resp) {
-            if(err){
-                let msg = "There was a problem adding you to the Database."
-                buildSpeechletResponseWithoutCard(msg, null, true)
+    let table = "Recipes";
+    let params = {
+        TableName: table,
+        Key:{
+            "_userId": userId
+        }
+    };
+    DB.get(params, function(err, data) {
+        if (err) {
+            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+        } else {
+            console.log("User response:", JSON.stringify(data, null, 2));
+            if(!data["Item"] || data["Item"] === "undefined"){
+                console.log("USERID NOT IN DB!");
+                let params = {
+                  TableName: table,
+                  Item: {
+                        _userId: userId,
+                        _currentRecipe: "undefined"
+                    }
+                };
+                DB.put(params, function(err, data) {
+                    if(err){
+                        console.log(err);
+                        let msg = "There was a problem adding you to the Database."
+                        buildSpeechletResponseWithoutCard(msg, null, true)
+                    } else {
+                        console.log("USER CREATED: ", data);
+                    }
+                });
             }
-        });
-    }
+        }
+    });
 }
 
 
@@ -172,15 +197,9 @@ function handleHelpIntent(intent, session, callback) {
     console.log("session is ", session);
     let speechOutput = "Please choose a recipe.";
     let reprompt = "What was that?";
-    if (session["currentRecipe"]){
-        speechOutput = session["currentRecipe"][session["sessionAttributes"]["currentSection"]][session["sessionAttributes"]["currentStep"]];
-    }
     let sessionAttributes = {
         "outputSpeech" : speechOutput,
-        "repromptText" : reprompt,
-        "currentRecipe": session["sessionAttributes"]["currentRecipe"],
-        "currentSection" : "Ingredients",
-        "currentStep"   : 0
+        "repromptText" : reprompt
     };
     // callback(sessionAttributes, buildSpeechletResponse(header, speechOutput, reprompt, shouldEndSession));
 }
@@ -188,45 +207,65 @@ function handleHelpIntent(intent, session, callback) {
 function handleStartRecipeIntent(intent, session, callback) {
     //if recipe in progress (check session)
     let userId = session.user.userId;
-    const dynasty = require('dynasty')(credentials), // Set up Dynasty with the AWS credentials
-    recipes = dynasty.table('Recipes'); // Get the Dynasty recipe table object
     let queryTerm = replaceSpacesAndUnderscores(intent.slots.Recipe.value.trim());
+    let table = "Recipes";
+    let params = {
+        TableName: table,
+        Key:{
+            "_userId": userId
+        }
+    };
+    DB.get(params, function(err, data) {
+        if (err) {
+            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+        } else {
+            var r = JSON.stringify(data,null,2);
+            console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+            console.log(`Data exists? ${JSON.stringify(data["Item"])}`);
+            // console.log(`Returned ${data} record`);
+        }
+    });
 
-    recipes.find(userId) //query DB for user item
-        .then(function(resp){
-            console.log("RESPONSE IS: ", resp);
-            let r = resp[queryTerm];
-            console.log("Recipe should be: ", r);
-            if(!r){
-                buildSpeechletResponseWithoutCard("I didn't find that recipe in your collection. Please try again.", null, true);
-            }
-            let speechOutput = {
-                type: "SSML",
-                ssml: "<speak>Starting "+r.displayName+" recipe.<break time='3s'/>"
-            };
-            // let speechOutput = "Starting the recipe.";
-             //Proceed to first ingredient
-            let firstIngredient = "Prep the Ingredients: <break time='1s'/>"+resp.ingredients[0]+"</speak>";
-            speechOutput["ssml"] += firstIngredient;
+    // recipes.find(userId) //query DB for user item
+    //     .then(function(resp){
+    //         console.log("RESPONSE IS: ", resp);
+    //         let r = resp[queryTerm]; //recipe
+    //         console.log("Recipe should be: ", r);
+    //         if(r === "undefined"){
+    //             let speechOutput = "I didn't find that recipe in your collection. Please try again.";
+    //             let sessionAttributes = {
+    //                 "outputSpeech" : speechOutput,
+    //                 "repromptText" : reprompt
+    //             };
+    //             callback(session, buildSpeechletResponseWithoutCard(speechOutput, null, true));
+    //         }
+    //         let speechOutput = {
+    //             type: "SSML",
+    //             ssml: "<speak>Starting "+r.displayName+" recipe.<break time='3s'/>"
+    //         };
+    //         // let speechOutput = "Starting the recipe.";
+    //          //Proceed to first ingredient
+    //         let firstIngredient = "Prep the Ingredients: <break time='1s'/>"+resp.ingredients[0]+"</speak>";
+    //         speechOutput["ssml"] += firstIngredient;
 
-            let reprompt = "Well?";
-            let sessionAttributes = {
-                "outputSpeech" : speechOutput,
-                "repromptText" : reprompt,
-                "currentRecipe": resp,
-                "currentSection" : "Ingredients",
-                "currentStep"   : 0
-            };
-            let shouldEndSession = true;
+    //         let reprompt = "Well?";
+    //         let sessionAttributes = {
+    //             "outputSpeech" : speechOutput,
+    //             "repromptText" : reprompt,
+    //             "currentRecipe": resp,
+    //             "currentSection" : "Ingredients",
+    //             "currentStep"   : 0
+    //         };
+    //         let shouldEndSession = true;
             
            
-            // sessionAttributes["speechOutput"]["ssml"] += "Prep the Ingredients: <break time='2s'/> "+resp.Ingredients[sessionAttributes["currentStep"]]+"</speak>";
-            // sessionAttributes["speechOutput"]["ssml"] += firstIngredient;
+    //         // sessionAttributes["speechOutput"]["ssml"] += "Prep the Ingredients: <break time='2s'/> "+resp.Ingredients[sessionAttributes["currentStep"]]+"</speak>";
+    //         // sessionAttributes["speechOutput"]["ssml"] += firstIngredient;
             
-            // sessionAttributes["speechOutput"] = "blerg";
-            // console.log("SpeechOutput is being passed as ", speechOutput);
-            callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
-        });
+    //         // sessionAttributes["speechOutput"] = "blerg";
+    //         // console.log("SpeechOutput is being passed as ", speechOutput);
+    //         callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
+    //     });
 
     // docClient.scan(scanningParameters, function(err, data){
     //     if(err){
