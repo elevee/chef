@@ -25,23 +25,9 @@ var DB 	= new AWS.DynamoDB.DocumentClient();
 	// recipes = dynasty.table('Recipes'); // Get the Dynasty recipe table object
 
 var userId 	= "testUser123";
-
-// console.log("recipestable: ", recipes);
-
-// Fire off the query, putting its result in the promise
-// var promise = recipesTable.find('Citrus Glaze');
-
-// Add a promise success handler for when the call returns
-// promise.then(function(record){
-// 	console.log(record.ingredients);
-// });
-
-// recipes.find("Citrus Glaze")
-// 	.then(function(resp){
-// 		console.log(resp);
-// 		console.log(resp.Name);
-// 		// console.log(resp[]);
-// 	});
+// var searchTerm = "citrus_glaze";
+var searchTerm = "lime_and_cornmeal_cookies";
+var table = "Recipes";
 
 var initialUser = {
 	_userId: "livan_hernandez",
@@ -49,79 +35,57 @@ var initialUser = {
 }
 
 var cg = {
-	"citrus_glaze": {
-	  "ingredients": [
-	    "1 1/3 cups powdered sugar",
-	    "2 large limes, zested",
-	    "3 tablespoons fresh lemon juice"
-	  ],
-	  "instructions": [
-	    "In a medium bowl, whisk together the powdered sugar, lime zest, and lemon juice until smooth.",
-	    "Spread about 1 teaspoon of the glaze onto each cookie leaving, a 1/4-inch border around the edge.",
-	    "Allow the glaze to harden for about 45 minutes before serving."
-	  ],
-	  "currentSection": "ingredients",
-	  "currentStep": 0,
-	  "displayName": "Citrus Glaze"
-	}
-};
-
-var cg1 = {
-	"best_citrus_glaze": {
-	  "ingredients": [
-	    "1 1/3 cups powdered sugar",
-	    "2 large limes, zested",
-	    "3 tablespoons fresh lemon juice"
-	  ],
-	  "instructions": [
-	    "In a medium bowl, whisk together the powdered sugar, lime zest, and lemon juice until smooth.",
-	    "Spread about 1 teaspoon of the glaze onto each cookie leaving, a 1/4-inch border around the edge.",
-	    "Allow the glaze to harden for about 45 minutes before serving."
-	  ],
-	  "currentSection": "ingredients",
-	  "currentStep": 0,
-	  "displayName": "Citrus Glaze"
-	}
+  "ingredients": [
+    "1 1/3 cups powdered sugar",
+    "2 large limes, zested",
+    "3 tablespoons fresh lemon juice"
+  ],
+  "instructions": [
+    "In a medium bowl, whisk together the powdered sugar, lime zest, and lemon juice until smooth.",
+    "Spread about 1 teaspoon of the glaze onto each cookie leaving, a 1/4-inch border around the edge.",
+    "Allow the glaze to harden for about 45 minutes before serving."
+  ],
+  "currentSection": "ingredients",
+  "currentStep": 0,
+  "displayName": "Citrus Glaze"
 };
 
 var cookies = {
-    "lime_and_cornmeal_cookies": {
-      "ingredients": [
-	    "1/2 stick unsalted butter, at room temperature",
-	    "1 cup sugar",
-	    "3 large limes, zested",
-	    "1 egg, at room temperature",
-	    "3 tablespoons fresh lime juice (2 to 3 large limes)",
-	    "1/2 teaspoon pure vanilla extract",
-	    "1 1/2 cups rice flour, plus extra for dusting",
-	    "1/2 cup cornmeal",
-	    "1/2 teaspoon baking powder",
-	    "1/4 teaspoon fine sea salt"
-	  ],
-      "instructions": [
-	    "Line a baking sheet with a silicone liner or parchment paper. Set aside.",
-	    "In a food processor, pulse together the butter, sugar, and lime zest until combined.",
-	    "Add the egg, lime juice, and vanilla.",
-	    "Process until smooth.",
-	    "Add the rice flour, cornmeal, baking powder, and salt. ",
-	    "Process until the mixture forms a dough.",
-	    "Place the dough on a lightly floured surface and knead for 20 seconds.",
-	    "Form the dough into a ball, wrap in plastic, and refrigerate for 20 minutes.",
-	    "Place an oven rack in the center of the oven.",
-	    "Preheat the oven to 350 degrees F.",
-	    "Lightly flour a work surface.",
-	    "Cut the dough in half and roll out each piece into a 9-inch diameter circle, about 1/4-inch thick.",
-	    "Using a 3-inch round cookie cutter, cut the dough into 10 circles and arrange on the prepared baking sheet.",
-	    "Gather any scraps of dough, knead together, and roll out to 1/4-inch thick.",
-	    "Cut out 2 additional rounds of dough and place on the baking sheet.",
-	    "Bake until light golden around the edges, 15 to 20 minutes.",
-	    "Cool for 10 minutes and transfer to a cooling rack to cool completely, about 15 minutes."
-  		],
-  	  "currentSection": "ingredients",
-      "currentStep": 0,
-      "displayName": "Lime and Cornmeal Cookies"
-    }
-  }; 
+  "ingredients": [
+    "1/2 stick unsalted butter, at room temperature",
+    "1 cup sugar",
+    "3 large limes, zested",
+    "1 egg, at room temperature",
+    "3 tablespoons fresh lime juice (2 to 3 large limes)",
+    "1/2 teaspoon pure vanilla extract",
+    "1 1/2 cups rice flour, plus extra for dusting",
+    "1/2 cup cornmeal",
+    "1/2 teaspoon baking powder",
+    "1/4 teaspoon fine sea salt"
+  ],
+  "instructions": [
+    "Line a baking sheet with a silicone liner or parchment paper. Set aside.",
+    "In a food processor, pulse together the butter, sugar, and lime zest until combined.",
+    "Add the egg, lime juice, and vanilla.",
+    "Process until smooth.",
+    "Add the rice flour, cornmeal, baking powder, and salt. ",
+    "Process until the mixture forms a dough.",
+    "Place the dough on a lightly floured surface and knead for 20 seconds.",
+    "Form the dough into a ball, wrap in plastic, and refrigerate for 20 minutes.",
+    "Place an oven rack in the center of the oven.",
+    "Preheat the oven to 350 degrees F.",
+    "Lightly flour a work surface.",
+    "Cut the dough in half and roll out each piece into a 9-inch diameter circle, about 1/4-inch thick.",
+    "Using a 3-inch round cookie cutter, cut the dough into 10 circles and arrange on the prepared baking sheet.",
+    "Gather any scraps of dough, knead together, and roll out to 1/4-inch thick.",
+    "Cut out 2 additional rounds of dough and place on the baking sheet.",
+    "Bake until light golden around the edges, 15 to 20 minutes.",
+    "Cool for 10 minutes and transfer to a cooling rack to cool completely, about 15 minutes."
+		],
+	  "currentSection": "ingredients",
+  "currentStep": 0,
+  "displayName": "Lime and Cornmeal Cookies"
+}; 
 
 // -------------------------------------------------------------------------------
 // Need to be able to find:
@@ -159,36 +123,26 @@ var cookies = {
 // 	});
 
 // TO ADD A RECIPE
-// recipes
-// 	.update(userId, cookies) 
-//     .then(function(resp) {
-//         console.log(resp);
-//     });
+var params = {
+  TableName: table,
+  Key: { "_userId" : userId },
+  UpdateExpression: 'set #a = :r',
+  // ConditionExpression: '#a < :MAX',
+  ExpressionAttributeNames: {'#a': searchTerm},
+  ExpressionAttributeValues: {
+    ':r' : cookies
+  },
+  ReturnValues:"UPDATED_NEW"
+};
+// console.log(params);
 
-var searchTerm = "citrus_glaze";
-
-// recipes
-// 	.find(userId)
-// 	.then(function(resp){
-// 		var r = resp[searchTerm];
-// 		// console.log(r);
-// 		r["currentStep"]++;
-// 		r["currentSection"] = "instructions";
-// 		recipes.update(userId, {
-// 			searchTerm: r
-// 		}) 
-// 	    .then(function(resp) {
-// 	        console.log(resp);
-// 	    });
-// 	});
-
-// TRADITIONAL NODE CALLBACK WITH ERROR
-// recipes.update(userId, cookies, function(err, resp) {
-//     console.log(resp);
-// });
+DB.update(params, function(err, data) {
+   if (err) console.log(err);
+   else console.log(data);
+});
 
 // -------------------------------------------------------------------------------
-var table = "Recipes";
+
 // get a user record
 // var params = {
 //     TableName: table,
@@ -223,9 +177,9 @@ var table = "Recipes";
 //     }
 // });
 
-// add a new Recipe
+
 // edit a step inside a recipe (currentStep)
-var newStep = 1;
+// var newStep = 1;
 
 // var params = {
 //   TableName: table,
