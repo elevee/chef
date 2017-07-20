@@ -9,8 +9,6 @@ AWS.config.update({
 });
 var DB 	= new AWS.DynamoDB.DocumentClient();
 
-
-
 // console.log("creds: ", creds);
 // var credentials = {
 //     accessKeyId: process.env.AWS_ACCESS_KEY,
@@ -25,8 +23,8 @@ var DB 	= new AWS.DynamoDB.DocumentClient();
 	// recipes = dynasty.table('Recipes'); // Get the Dynasty recipe table object
 
 var userId 	= "testUser123";
-// var searchTerm = "citrus_glaze";
-var searchTerm = "lime_and_cornmeal_cookies";
+var searchTerm = "citrus_glaze";
+// var searchTerm = "lime_and_cornmeal_cookies";
 var table = "Recipes";
 
 var initialUser = {
@@ -47,7 +45,8 @@ var cg = {
   ],
   "currentSection": "ingredients",
   "currentStep": 0,
-  "displayName": "Citrus Glaze"
+  "displayName": "Citrus Glaze",
+  "name": "citrus_glaze"
 };
 
 var cookies = {
@@ -84,7 +83,8 @@ var cookies = {
 		],
 	  "currentSection": "ingredients",
   "currentStep": 0,
-  "displayName": "Lime and Cornmeal Cookies"
+  "displayName": "Lime and Cornmeal Cookies",
+  "name": "lime_and_cornmeal_cookies"
 }; 
 
 // -------------------------------------------------------------------------------
@@ -123,23 +123,23 @@ var cookies = {
 // 	});
 
 // TO ADD A RECIPE
-var params = {
-  TableName: table,
-  Key: { "_userId" : userId },
-  UpdateExpression: 'set #a = :r',
-  // ConditionExpression: '#a < :MAX',
-  ExpressionAttributeNames: {'#a': searchTerm},
-  ExpressionAttributeValues: {
-    ':r' : cookies
-  },
-  ReturnValues:"UPDATED_NEW"
-};
-// console.log(params);
+// var params = {
+//   TableName: table,
+//   Key: { "_userId" : userId },
+//   UpdateExpression: 'set #a = :r',
+//   // ConditionExpression: '#a < :MAX',
+//   ExpressionAttributeNames: {'#a': searchTerm},
+//   ExpressionAttributeValues: {
+//     ':r' : cookies
+//   },
+//   ReturnValues:"UPDATED_NEW"
+// };
+// // console.log(params);
 
-DB.update(params, function(err, data) {
-   if (err) console.log(err);
-   else console.log(data);
-});
+// DB.update(params, function(err, data) {
+//    if (err) console.log(err);
+//    else console.log(data);
+// });
 
 // -------------------------------------------------------------------------------
 
@@ -199,6 +199,30 @@ DB.update(params, function(err, data) {
 //    if (err) console.log(err);
 //    else console.log(data);
 // });
+
+// edit multiple attributes (currentSection, currentStep)
+var newStep = 4;
+var newSection = "instructions";
+
+var params = {
+  TableName: table,
+  Key: { "_userId" : userId },
+  UpdateExpression: 'set #a.currentSection = :x, #a.currentStep = :s',
+  // ConditionExpression: '#a < :MAX',
+  ExpressionAttributeNames: {'#a': searchTerm},
+  ExpressionAttributeValues: {
+    ':x' : newSection,
+    ':s' : newStep
+  },
+  ReturnValues:"UPDATED_NEW"
+};
+
+// console.log(params);
+
+DB.update(params, function(err, data) {
+   if (err) console.log(err);
+   else console.log(data);
+});
 
 // var newUser = "the_juice";
 // var params = {

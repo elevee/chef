@@ -204,6 +204,36 @@ function handleHelpIntent(intent, session, callback) {
     // callback(sessionAttributes, buildSpeechletResponse(header, speechOutput, reprompt, shouldEndSession));
 }
 
+function updateRecipeState(userId, recipe, section, step){
+    let p = new Promise(function(resolve, reject){
+        if(userId && recipe && section && (step !== "undefined")){ //step being 0 is false-y.
+            let table = "Recipes";
+            let params = {
+                TableName: table,
+                Key: { "_userId" : userId },
+                UpdateExpression: 'set #a.currentSection = :x, #a.currentStep = :s',
+                ExpressionAttributeNames: {'#a': recipe.name},
+                ExpressionAttributeValues: {
+                    ':x' : section,
+                    ':s' : step
+                },
+                ReturnValues:"UPDATED_NEW"
+            };
+            // console.log("params are ", params);
+            DB.update(params, function(err, data) {
+                if(err){
+                    console.log(err);
+                    reject("It didn't work.");
+                } else {
+                    console.log("UPDATE RECIPE STATE COMPLETED SUCCESSFULLY ", data);
+                    resolve("It worked.");
+                }
+            });
+        }
+    });
+    return p;
+}
+
 function handleStartRecipeIntent(intent, session, callback) {
     //if recipe in progress (check session)
     let userId = session.user.userId;
@@ -215,65 +245,57 @@ function handleStartRecipeIntent(intent, session, callback) {
             "_userId": userId
         }
     };
-    DB.get(params, function(err, data) {
+    DB.get(params, function(err, data) { //query DB for user item
         if (err) {
             console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
         } else {
-            var r = JSON.stringify(data,null,2);
+            // var r = JSON.stringify(data,null,2);
             console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
             console.log(`Data exists? ${JSON.stringify(data["Item"])}`);
-            // console.log(`Returned ${data} record`);
+            let r = data["Item"][queryTerm]; //recipe
+            let speechOutput = "I didn't find that recipe in your collection. Please try again.";
+            
+            console.log("Recipe should be: ", r);
+            if(r === "undefined"){
+                let sessionAttributes = {
+                    "outputSpeech" : speechOutput
+                };
+                callback(session, buildSpeechletResponseWithoutCard(speechOutput, null, true));
+            } else {
+                speechOutput = {
+                    type: "SSML",
+                    ssml: "<speak>Starting "+r.displayName+" recipe.<break time='3s'/>"
+                };
+                
+                //Proceed to first ingredient
+                let firstIngredient = "Prep the Ingredients: <break time='1s'/>"+r.ingredients[0]+"</speak>";
+                speechOutput["ssml"] += firstIngredient;
+                let reprompt = null;
+                let sessionAttributes = {
+                    "outputSpeech" : speechOutput,
+                    // "repromptText" : reprompt,
+                    "currentRecipe": r,
+                    "currentSection" : "Ingredients",
+                    "currentStep"   : 0
+                };
+                let shouldEndSession = true;
+
+                //if section isn't ingredients & step isn't zero, update it.
+                if(r["currentSection"] !== "ingredients" || r["currentStep"] !== 0){
+                    updateRecipeState(userId, r, "ingredients", "0")
+                        .then(function(result){
+                            console.log("Result is ", result);
+                            console.log("SpeechOutput is being passed as ", speechOutput);
+                            callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
+                        });
+                } else {
+                    console.log("SpeechOutput is being passed as ", speechOutput);
+                    callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
+                }
+                
+            }
         }
     });
-
-    // recipes.find(userId) //query DB for user item
-    //     .then(function(resp){
-    //         console.log("RESPONSE IS: ", resp);
-    //         let r = resp[queryTerm]; //recipe
-    //         console.log("Recipe should be: ", r);
-    //         if(r === "undefined"){
-    //             let speechOutput = "I didn't find that recipe in your collection. Please try again.";
-    //             let sessionAttributes = {
-    //                 "outputSpeech" : speechOutput,
-    //                 "repromptText" : reprompt
-    //             };
-    //             callback(session, buildSpeechletResponseWithoutCard(speechOutput, null, true));
-    //         }
-    //         let speechOutput = {
-    //             type: "SSML",
-    //             ssml: "<speak>Starting "+r.displayName+" recipe.<break time='3s'/>"
-    //         };
-    //         // let speechOutput = "Starting the recipe.";
-    //          //Proceed to first ingredient
-    //         let firstIngredient = "Prep the Ingredients: <break time='1s'/>"+resp.ingredients[0]+"</speak>";
-    //         speechOutput["ssml"] += firstIngredient;
-
-    //         let reprompt = "Well?";
-    //         let sessionAttributes = {
-    //             "outputSpeech" : speechOutput,
-    //             "repromptText" : reprompt,
-    //             "currentRecipe": resp,
-    //             "currentSection" : "Ingredients",
-    //             "currentStep"   : 0
-    //         };
-    //         let shouldEndSession = true;
-            
-           
-    //         // sessionAttributes["speechOutput"]["ssml"] += "Prep the Ingredients: <break time='2s'/> "+resp.Ingredients[sessionAttributes["currentStep"]]+"</speak>";
-    //         // sessionAttributes["speechOutput"]["ssml"] += firstIngredient;
-            
-    //         // sessionAttributes["speechOutput"] = "blerg";
-    //         // console.log("SpeechOutput is being passed as ", speechOutput);
-    //         callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
-    //     });
-
-    // docClient.scan(scanningParameters, function(err, data){
-    //     if(err){
-    //         // callback(err, null);
-    //     } else {
-    //         // callback(null, data);
-    //     }
-    // });
 }
 
 function handleRepeatIntent(intent, session, callback) {
