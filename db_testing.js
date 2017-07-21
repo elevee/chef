@@ -201,21 +201,38 @@ var cookies = {
 // });
 
 // edit multiple attributes (currentSection, currentStep)
-var newStep = 4;
-var newSection = "instructions";
+var newStep = 1;
+var newSection = "ingredients";
 
 var params = {
   TableName: table,
   Key: { "_userId" : userId },
-  UpdateExpression: 'set #a.currentSection = :x, #a.currentStep = :s',
-  // ConditionExpression: '#a < :MAX',
-  ExpressionAttributeNames: {'#a': searchTerm},
-  ExpressionAttributeValues: {
+  UpdateExpression: 'set #c = :rec, #a.currentSection = :x, #a.currentStep = :s',
+ExpressionAttributeNames: {
+    '#a': searchTerm,
+    '#c': "_currentRecipe"
+},
+ExpressionAttributeValues: {
+    ':rec': searchTerm,
     ':x' : newSection,
     ':s' : newStep
-  },
+},
   ReturnValues:"UPDATED_NEW"
 };
+
+// var params = {
+//   TableName: table,
+//   Key: { "_userId" : userId },
+//   UpdateExpression: 'set #c = :u',
+// 	ExpressionAttributeNames: {
+// 	    // '#a': searchTerm,
+// 	    '#c': "_currentRecipe"
+// 	},
+// ExpressionAttributeValues: {
+//     ':u': "undefined"
+// },
+//   ReturnValues:"UPDATED_NEW"
+// };
 
 // console.log(params);
 

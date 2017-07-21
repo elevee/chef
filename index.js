@@ -204,29 +204,58 @@ function handleHelpIntent(intent, session, callback) {
     // callback(sessionAttributes, buildSpeechletResponse(header, speechOutput, reprompt, shouldEndSession));
 }
 
+function getRecipeState(userId){
+    let p = new Promise(function(resolve, reject){
+        if(userId){
+            let table = "Recipes";
+            let params = {
+                TableName: table,
+                Key:{
+                    "_userId": userId
+                }
+            };
+            DB.get(params, function(err, data) {
+                if (err) {
+                    console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+                    reject("It didn't work", err);
+                } else {
+                    console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+                    resolve(data);
+                }
+            });
+        }
+    });
+    return p;
+}
+
 function updateRecipeState(userId, recipe, section, step){
+    console.log("UPDATE RECIPE FIRED");
     let p = new Promise(function(resolve, reject){
         if(userId && recipe && section && (step !== "undefined")){ //step being 0 is false-y.
             let table = "Recipes";
             let params = {
                 TableName: table,
                 Key: { "_userId" : userId },
-                UpdateExpression: 'set #a.currentSection = :x, #a.currentStep = :s',
-                ExpressionAttributeNames: {'#a': recipe.name},
+                UpdateExpression: 'set #c = :rec, #a.currentSection = :x, #a.currentStep = :s',
+                ExpressionAttributeNames: {
+                    '#a': recipe.name,
+                    '#c': "_currentRecipe",
+                },
                 ExpressionAttributeValues: {
+                    ':rec': recipe.name,
                     ':x' : section,
                     ':s' : step
                 },
                 ReturnValues:"UPDATED_NEW"
             };
-            // console.log("params are ", params);
+            console.log("params are ", params);
             DB.update(params, function(err, data) {
                 if(err){
-                    console.log(err);
-                    reject("It didn't work.");
+                    console.log("THERE WAS AN ERROR", err);
+                    reject(err);
                 } else {
                     console.log("UPDATE RECIPE STATE COMPLETED SUCCESSFULLY ", data);
-                    resolve("It worked.");
+                    resolve(data);
                 }
             });
         }
@@ -251,8 +280,8 @@ function handleStartRecipeIntent(intent, session, callback) {
         } else {
             // var r = JSON.stringify(data,null,2);
             console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
-            console.log(`Data exists? ${JSON.stringify(data["Item"])}`);
             let r = data["Item"][queryTerm]; //recipe
+
             let speechOutput = "I didn't find that recipe in your collection. Please try again.";
             
             console.log("Recipe should be: ", r);
@@ -274,19 +303,23 @@ function handleStartRecipeIntent(intent, session, callback) {
                 let sessionAttributes = {
                     "outputSpeech" : speechOutput,
                     // "repromptText" : reprompt,
-                    "currentRecipe": r,
-                    "currentSection" : "Ingredients",
-                    "currentStep"   : 0
+                    "currentRecipe": r
                 };
                 let shouldEndSession = true;
 
                 //if section isn't ingredients & step isn't zero, update it.
                 if(r["currentSection"] !== "ingredients" || r["currentStep"] !== 0){
-                    updateRecipeState(userId, r, "ingredients", "0")
+                    //reset stats for recipe
+                    r["currentStep"] = 0;
+                    r["currentSection"] = "ingredients";
+                    updateRecipeState(userId, r, r["currentSection"], r["currentStep"])
                         .then(function(result){
                             console.log("Result is ", result);
+                            sessionAttributes["currentRecipe"] = r;
                             console.log("SpeechOutput is being passed as ", speechOutput);
                             callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
+                        },function(err){
+                            console.log("Error with the recipe update ", err);
                         });
                 } else {
                     console.log("SpeechOutput is being passed as ", speechOutput);
@@ -300,12 +333,31 @@ function handleStartRecipeIntent(intent, session, callback) {
 
 function handleRepeatIntent(intent, session, callback) {
     console.log("session is ", session);
-    let speechOutput = "I have nothing to repeat";
-    let s = session.attributes;
-    if(s && s.currentRecipe && s.currentRecipe[s.currentSection][s.currentStep]){
-        speechOutput = s.currentRecipe[s.currentSection][s.currentStep];
+    let userId  = session.user.userId;
+    let s       = session.attributes;
+    let _r      = s.currentRecipe;
+    let sessionAttributes = {
+        "outputSpeech" : "I have nothing to repeat",
+        "currentRecipe": _r
+    };
+    let shouldEndSession = true;
+    
+    if(s && _r && _r.currentSection && (_r.currentStep !== "undefined")){
+        sessionAttributes["outputSpeech"] = _r[_r.currentSection][_r.currentStep];
+        callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], "What was that?", false));
+    } else { //no session info avail
+        getRecipeState(userId)
+            .then(function(result){
+                if(result["Item"]){
+                    console.log("Result is ", result);
+                    sessionAttributes["outputSpeech"]  = result["Item"][_r.currentSection][_r.currentStep];
+                    sessionAttributes["currentRecipe"] = result["Item"];
+                    console.log("SpeechOutput is being passed as ", speechOutput);
+                    callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], reprompt, shouldEndSession));    
+                }
+            });
     }
-    callback(s, buildSpeechletResponseWithoutCard(speechOutput, "What was that?", false));
+    // callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], "null", shouldEndSession));
 }
 
 function handlePreviousIntent(intent, session, callback) {
