@@ -22,7 +22,8 @@ var DB 	= new AWS.DynamoDB.DocumentClient();
 // var dynasty = require('dynasty')(credentials), // Set up Dynasty with the AWS credentials
 	// recipes = dynasty.table('Recipes'); // Get the Dynasty recipe table object
 
-var userId 	= "testUser123";
+// var userId 	= "testUser123";
+
 var searchTerm = "citrus_glaze";
 // var searchTerm = "lime_and_cornmeal_cookies";
 var table = "Recipes";

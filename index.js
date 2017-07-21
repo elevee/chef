@@ -217,7 +217,7 @@ function getRecipeState(userId){
             DB.get(params, function(err, data) {
                 if (err) {
                     console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-                    reject("It didn't work", err);
+                    reject(err);
                 } else {
                     console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
                     resolve(data);
@@ -246,7 +246,7 @@ function updateRecipeState(userId, recipe, section, step){
                     ':x' : section,
                     ':s' : step
                 },
-                ReturnValues:"UPDATED_NEW"
+                ReturnValues:"ALL_NEW"
             };
             console.log("params are ", params);
             DB.update(params, function(err, data) {
@@ -254,7 +254,7 @@ function updateRecipeState(userId, recipe, section, step){
                     console.log("THERE WAS AN ERROR", err);
                     reject(err);
                 } else {
-                    console.log("UPDATE RECIPE STATE COMPLETED SUCCESSFULLY ", data);
+                    // console.log("UPDATE RECIPE STATE COMPLETED SUCCESSFULLY ", data);
                     resolve(data);
                 }
             });
@@ -349,12 +349,20 @@ function handleRepeatIntent(intent, session, callback) {
         getRecipeState(userId)
             .then(function(result){
                 if(result["Item"]){
-                    console.log("Result is ", result);
-                    sessionAttributes["outputSpeech"]  = result["Item"][_r.currentSection][_r.currentStep];
-                    sessionAttributes["currentRecipe"] = result["Item"];
-                    console.log("SpeechOutput is being passed as ", speechOutput);
-                    callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], reprompt, shouldEndSession));    
+                    let recipe = result["Item"][result["Item"]["_currentRecipe"]];
+                    if(recipe === "undefined"){
+                        let outputSpeech = "No current recipe selected.";
+                        sessionAttributes["currentRecipe"] = null;
+                        callback(sessionAttributes, buildSpeechletResponseWithoutCard(outputSpeech, null, shouldEndSession));
+                    } else {
+                        sessionAttributes["outputSpeech"]  = recipe[recipe.currentSection][recipe.currentStep];
+                        sessionAttributes["currentRecipe"] = recipe;
+                        console.log("SpeechOutput is being passed as ", sessionAttributes["outputSpeech"]);
+                        callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                    }
                 }
+            }, function(err){
+                console.log(err);
             });
     }
     // callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], "null", shouldEndSession));
@@ -385,30 +393,97 @@ function handlePreviousIntent(intent, session, callback) {
 
 function handleNextIntent(intent, session, callback) {
     let speechOutput = "Please select a recipe first. Use the keyword start, with the recipe name";
-    let shouldEndSession = false;
+    let shouldEndSession = true;
     let s = session.attributes;
-    if(s && s.currentRecipe && s.currentSection && typeof s.currentStep !== "undefined"){
-        if(s.currentStep === (s.currentRecipe[s.currentSection].length - 1)){
-            if (s.currentSection === "Ingredients"){ //if we are on last step of ingredients, move on to instructions.
-                s.currentSection = "Instructions";
-                s.currentStep = 0;
-                speechOutput = {
-                    type: "SSML",
-                    ssml: "<speak>Prep is done. "+s.currentRecipe[s.currentSection][s.currentStep]+"</speak>"
-                }
+    let userId = session.user.userId;
+    let sessionAttributes = {
+        "outputSpeech" : speechOutput,
+        "currentRecipe": null
+    };
+    
+    let r = null;
+    if(s && s.currentRecipe && typeof s.currentRecipe.currentStep !== "undefined"){ // session info present? Use that.
+        console.log("___USING SESSION___");
+        r = s.currentRecipe;
+        if(r.currentStep === (r[r.currentSection].length - 1)){ //if we are on last step
+            if (r.currentSection === "Ingredients"){ // last step of ingredients, move on to instructions.
+                console.log("___LAST STEP!____");
+                updateRecipeState(userId, r, "instructions", 0) //currentSection = "instructions", currentStep = 0;
+                    .then(function(result){
+                        console.log("Result is ", result);
+                        sessionAttributes["currentRecipe"] = result; //store updated recipe in session
+                        sessionAttributes["outputSpeech"] = {
+                            type: "SSML",
+                            ssml: "<speak>Prep is done. "+result[result.currentSection][result.currentStep]+"</speak>"
+                        };
+                        callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                    },function(err){
+                        console.log("Error with the recipe update ", err);
+                    });
             } else { //if we are on last step of instructions, finish the recipe and close session.
-                shouldEndSession = true;
-                s.currentStep++;
-                speechOutput = "Nice job! You're done with the recipe.";
+                speechOutput = "Nice job! You're done with the recipe. Start a new one to continue.";
+                callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, null, shouldEndSession));
             }
-        } else if (s.currentStep < s.currentRecipe[s.currentSection].length){ //move to next step, increment currentStep
-            s.currentStep++;
-            speechOutput = s.currentRecipe[s.currentSection][s.currentStep];
-        } else { //this shouldn't happen!
-            // console.log("ELSE CASE! ");
+        } else if (r.currentStep < r[r.currentSection].length){ //move to next step, increment currentStep
+            r.currentStep++;
+            console.log("___ADVANCING THE STEP COUNT____to ", r.currentStep);
+            updateRecipeState(userId, r, r.currentSection, r.currentStep) //currentSection = "instructions", currentStep = 0;
+                .then(function(result){
+                    console.log("Result is ", result);
+                    sessionAttributes["currentRecipe"] = result; //store updated recipe in session
+                    sessionAttributes["outputSpeech"] = result[result._currentRecipe][result.currentSection][result.currentStep];
+                    callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                },function(err){
+                    console.log("Error with the recipe update ", err);
+                });
         }
+    } else { // no session info? Retrieve recipe from DB
+        console.log("___USING DB___");
+        getRecipeState(userId)
+            .then(function(result){ // After retrieval, determine new values
+                if(result["Item"]){
+                    r = result["Item"][result["Item"]["_currentRecipe"]];
+                    if(recipe === "undefined"){
+                        sessionAttributes["currentRecipe"] = null;
+                        callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                    } else {
+                        if(r.currentStep === (r[r.currentSection].length - 1)){ //if we are on last step
+                            if (r.currentSection === "Ingredients"){ // last step of ingredients, move on to instructions.
+                                updateRecipeState(userId, r, "instructions", 0) //currentSection = "instructions", currentStep = 0;
+                                    .then(function(result){
+                                        console.log("Result is ", result);
+                                        sessionAttributes["currentRecipe"] = result; //store updated recipe in session
+                                        sessionAttributes["outputSpeech"] = {
+                                            type: "SSML",
+                                            ssml: "<speak>Prep is done. "+result[result.currentSection][result.currentStep]+"</speak>"
+                                        };
+                                        callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                                    },function(err){
+                                        console.log("Error with the recipe update ", err);
+                                    });
+                            } else { //if we are on last step of instructions, finish the recipe and close session.
+                                speechOutput = "Nice job! You're done with the recipe. Start a new one to continue.";
+                                callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, null, shouldEndSession));
+                            }
+                        } else if (r.currentStep < r[r.currentSection].length){ //move to next step, increment currentStep
+                            r.currentStep++;
+                            console.log("___ADVANCING THE STEP COUNT____to ", r.currentStep);
+                            updateRecipeState(userId, r, r.currentSection, r.currentStep) //// Update record in DB.
+                                .then(function(result){
+                                    console.log("Result is ", result);
+                                    sessionAttributes["currentRecipe"] = result; //store updated recipe in session
+                                    sessionAttributes["outputSpeech"] = result[result.currentSection][result.currentStep];
+                                    callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                                },function(err){
+                                    console.log("Error with the recipe update ", err);
+                                });
+                        }
+                    }
+                }
+            }, function(err){
+                console.log(err);
+            });
     }
-    callback(s, buildSpeechletResponseWithoutCard(speechOutput, "What was that?", shouldEndSession));
 }
 
 
