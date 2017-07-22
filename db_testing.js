@@ -202,7 +202,7 @@ var cookies = {
 // });
 
 // edit multiple attributes (currentSection, currentStep)
-var newStep = 1;
+var newStep = 2;
 var newSection = "ingredients";
 
 var params = {
@@ -218,7 +218,7 @@ ExpressionAttributeValues: {
     ':x' : newSection,
     ':s' : newStep
 },
-  ReturnValues:"UPDATED_NEW"
+  ReturnValues:"ALL_NEW"
 };
 
 // var params = {

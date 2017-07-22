@@ -406,15 +406,16 @@ function handleNextIntent(intent, session, callback) {
         console.log("___USING SESSION___");
         r = s.currentRecipe;
         if(r.currentStep === (r[r.currentSection].length - 1)){ //if we are on last step
-            if (r.currentSection === "Ingredients"){ // last step of ingredients, move on to instructions.
+            if (r.currentSection === "ingredients"){ // last step of ingredients, move on to instructions.
                 console.log("___LAST STEP!____");
                 updateRecipeState(userId, r, "instructions", 0) //currentSection = "instructions", currentStep = 0;
                     .then(function(result){
-                        console.log("Result is ", result);
-                        sessionAttributes["currentRecipe"] = result; //store updated recipe in session
+                        let _result = result.Attributes[result.Attributes._currentRecipe];
+                        console.log("Result is ", _result);
+                        sessionAttributes["currentRecipe"] = _result; //store updated recipe in session
                         sessionAttributes["outputSpeech"] = {
                             type: "SSML",
-                            ssml: "<speak>Prep is done. "+result[result.currentSection][result.currentStep]+"</speak>"
+                            ssml: "<speak>Prep is done. "+_result[_result.currentSection][_result.currentStep]+"</speak>"
                         };
                         callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
                     },function(err){
@@ -429,9 +430,10 @@ function handleNextIntent(intent, session, callback) {
             console.log("___ADVANCING THE STEP COUNT____to ", r.currentStep);
             updateRecipeState(userId, r, r.currentSection, r.currentStep) //currentSection = "instructions", currentStep = 0;
                 .then(function(result){
-                    console.log("Result is ", result);
-                    sessionAttributes["currentRecipe"] = result; //store updated recipe in session
-                    sessionAttributes["outputSpeech"] = result[result._currentRecipe][result.currentSection][result.currentStep];
+                    let _result = result.Attributes[result.Attributes._currentRecipe];
+                    console.log("Result is ", _result);
+                    sessionAttributes["currentRecipe"] = _result; //store updated recipe in session
+                    sessionAttributes["outputSpeech"] = _result[_result.currentSection][_result.currentStep];
                     callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
                 },function(err){
                     console.log("Error with the recipe update ", err);
@@ -442,20 +444,23 @@ function handleNextIntent(intent, session, callback) {
         getRecipeState(userId)
             .then(function(result){ // After retrieval, determine new values
                 if(result["Item"]){
+                    console.log("result is ", result);
                     r = result["Item"][result["Item"]["_currentRecipe"]];
-                    if(recipe === "undefined"){
+                    if(r === "undefined"){
+                        console.log("r was undefined");
                         sessionAttributes["currentRecipe"] = null;
                         callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
                     } else {
                         if(r.currentStep === (r[r.currentSection].length - 1)){ //if we are on last step
-                            if (r.currentSection === "Ingredients"){ // last step of ingredients, move on to instructions.
+                            if (r.currentSection === "ingredients"){ // last step of ingredients, move on to instructions.
                                 updateRecipeState(userId, r, "instructions", 0) //currentSection = "instructions", currentStep = 0;
                                     .then(function(result){
-                                        console.log("Result is ", result);
-                                        sessionAttributes["currentRecipe"] = result; //store updated recipe in session
+                                        let _result = result.Attributes[result.Attributes._currentRecipe];
+                                        console.log("Result is ", _result);
+                                        sessionAttributes["currentRecipe"] = _result; //store updated recipe in session
                                         sessionAttributes["outputSpeech"] = {
                                             type: "SSML",
-                                            ssml: "<speak>Prep is done. "+result[result.currentSection][result.currentStep]+"</speak>"
+                                            ssml: "<speak>Prep is done. "+_result[_result.currentSection][_result.currentStep]+"</speak>"
                                         };
                                         callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
                                     },function(err){
@@ -470,9 +475,10 @@ function handleNextIntent(intent, session, callback) {
                             console.log("___ADVANCING THE STEP COUNT____to ", r.currentStep);
                             updateRecipeState(userId, r, r.currentSection, r.currentStep) //// Update record in DB.
                                 .then(function(result){
-                                    console.log("Result is ", result);
-                                    sessionAttributes["currentRecipe"] = result; //store updated recipe in session
-                                    sessionAttributes["outputSpeech"] = result[result.currentSection][result.currentStep];
+                                    let _result = result.Attributes[result.Attributes._currentRecipe];
+                                    console.log("Result is ", _result);
+                                    sessionAttributes["currentRecipe"] = _result; //store updated recipe in session
+                                    sessionAttributes["outputSpeech"] = _result[_result.currentSection][_result.currentStep];
                                     callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
                                 },function(err){
                                     console.log("Error with the recipe update ", err);
