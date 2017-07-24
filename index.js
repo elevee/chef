@@ -149,6 +149,9 @@ function onIntent(intentRequest, session, callback) {
         case "RepeatIntent": //user wants to load in/start a recipe
             handleRepeatIntent(intent, session, callback);
             break;
+        case "IngredientIntent": //user wants to load in/start a recipe
+            handleIngredientIntent(intent, session, callback);
+            break;
         case "PreviousIntent": //navigating back
         case "NextIntent": //navigating forward
             handleDirectionIntent(intent, session, callback);
@@ -364,6 +367,68 @@ function handleRepeatIntent(intent, session, callback) {
             });
     }
     // callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], "null", shouldEndSession));
+}
+
+function handleIngredientIntent(intent, session, callback) {
+    //if recipe in progress (check session)
+    let userId = session.user.userId;
+    let s = session.attributes;
+    let _r = s.currentRecipe;
+    let queryTerm = intent.slots.Ingredient.value.trim();
+    let sessionAttributes = {
+        "outputSpeech" : "Couldn't find that ingredient. Please try again.",
+        "currentRecipe": _r
+    };
+    let shouldEndSession = true;
+    let table = "Recipes";
+    let params = {
+        TableName: table,
+        Key:{
+            "_userId": userId
+        }
+    };
+
+    if(s && _r && _r.currentSection && (_r.currentStep !== "undefined")){ //if info is already in session, use that
+        let ingredients = _r.ingredients;
+        if(queryTerm){
+            ingredients.forEach(function(ingredient, i){
+                if(ingredient.indexOf(queryTerm) > -1){
+                    console.log(ingredient);
+                    sessionAttributes["outputSpeech"] = ingredient;
+                    callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                }
+            });
+        } else {
+            callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+        }
+        
+    } else { //no session info avail, fetch it from DB
+        getRecipeState(userId)
+            .then(function(result){
+                if(result["Item"]){
+                    _r = result["Item"][result["Item"]["_currentRecipe"]];
+                    if(_r === "undefined"){
+                        sessionAttributes["outputSpeech"] = "I'm sorry, I couldn't retrieve the recipe you're working on. Please be sure to start the recipe first before asking about an ingredient.";
+                        sessionAttributes["currentRecipe"] = null;
+                        callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                    } else {
+                        sessionAttributes["currentRecipe"] = _r;
+                        let ingredients = _r.ingredients;
+                        if(queryTerm){
+                            ingredients.forEach(function(ingredient, i){
+                                if(ingredient.indexOf(queryTerm) > -1){
+                                    console.log(ingredient);
+                                    sessionAttributes["outputSpeech"] = ingredient;
+                                }
+                            });
+                            callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
+                        }
+                    }
+                }
+            }, function(err){
+                console.log(err);
+            });
+    }
 }
 
 function handleDirectionIntent(intent, session, callback) {

@@ -1,16 +1,25 @@
 {
   "intents": [
     {
+      "intent": "RecipeIntent",
       "slots": [
         {
           "name": "Recipe",
           "type": "AMAZON.Food"
         }
-      ],
-      "intent": "RecipeIntent"
+      ]
     },
     {
       "intent": "RepeatIntent"
+    },
+    {
+      "intent": "IngredientIntent",
+      "slots": [
+        {
+          "name": "Ingredient",
+          "type": "AMAZON.Food"
+        }
+      ]
     },
     {
       "intent": "PreviousIntent"

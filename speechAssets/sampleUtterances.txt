@@ -18,6 +18,10 @@ RepeatIntent What
 RepeatIntent Repeat
 RepeatIntent Could you repeat that
 RepeatIntent What did you say
+IngredientIntent How much {Ingredient}
+IngredientIntent How many {Ingredient}
+IngredientIntent What am I doing with {Ingredient}
+IngredientIntent What to do with {Ingredient}
 NextIntent Next step
 NextIntent What's next
 NextIntent What now
