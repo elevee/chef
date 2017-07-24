@@ -5,6 +5,7 @@ RecipeIntent Let's cook some {Recipe}
 RecipeIntent How about {Recipe}
 RecipeIntent To start {Recipe}
 RecipeIntent Start {Recipe}
+RecipeIntent Start {Recipe} recipe
 RecipeIntent Start recipe {Recipe}
 RecipeIntent Cook {Recipe}
 RepeatIntent What step am I on
