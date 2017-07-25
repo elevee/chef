@@ -1,13 +1,19 @@
-RecipeIntent {Recipe}
-RecipeIntent Go to {Recipe}
-RecipeIntent Let's cook {Recipe}
-RecipeIntent Let's cook some {Recipe}
-RecipeIntent How about {Recipe}
-RecipeIntent To start {Recipe}
-RecipeIntent Start {Recipe}
-RecipeIntent Start {Recipe} recipe
-RecipeIntent Start recipe {Recipe}
-RecipeIntent Cook {Recipe}
+StartRecipeIntent {Recipe}
+StartRecipeIntent Go to {Recipe}
+StartRecipeIntent Let's cook {Recipe}
+StartRecipeIntent Let's cook some {Recipe}
+StartRecipeIntent How about {Recipe}
+StartRecipeIntent To start {Recipe}
+StartRecipeIntent Start {Recipe}
+StartRecipeIntent Start {Recipe} recipe
+StartRecipeIntent Start recipe {Recipe}
+StartRecipeIntent Cook {Recipe}
+ResumeRecipeIntent Resume {Recipe}
+ResumeRecipeIntent Continue {Recipe}
+ResumeRecipeIntent Finish {Recipe}
+ResumeRecipeIntent Back to {Recipe}
+ResumeRecipeIntent Switch to {Recipe}
+ResumeRecipeIntent Change to {Recipe}
 RepeatIntent What step am I on
 RepeatIntent What is the step
 RepeatIntent What do I have to do

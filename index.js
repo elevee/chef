@@ -143,8 +143,11 @@ function onIntent(intentRequest, session, callback) {
     console.log("Intentname is ", intentName);
     // dispatch custom intents to handlers here
     switch(intentName){
-        case "RecipeIntent": //user wants to load in/start a recipe
+        case "StartRecipeIntent": //user wants to load in/start a recipe
             handleStartRecipeIntent(intent, session, callback);
+            break;
+        case "ResumeRecipeIntent": //resume a recipe at its current state
+            handleResumeRecipeIntent(intent, session, callback);
             break;
         case "RepeatIntent": //user wants to load in/start a recipe
             handleRepeatIntent(intent, session, callback);
@@ -294,7 +297,7 @@ function handleStartRecipeIntent(intent, session, callback) {
             } else {
                 speechOutput = {
                     type: "SSML",
-                    ssml: "<speak>Starting "+r.displayName+" recipe.<break time='3s'/>"
+                    ssml: "<speak>Starting "+r.displayName+" recipe.<break time='1s'/>"
                 };
                 
                 //Proceed to first ingredient
@@ -327,6 +330,63 @@ function handleStartRecipeIntent(intent, session, callback) {
                     callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
                 }
                 
+            }
+        }
+    });
+}
+
+function handleResumeRecipeIntent(intent, session, callback) {
+    let userId = session.user.userId;
+    let queryTerm = replaceSpacesAndUnderscores(intent.slots.Recipe.value.trim());
+    let table = "Recipes";
+    let params = {
+        TableName: table,
+        Key:{
+            "_userId": userId
+        }
+    };
+    DB.get(params, function(err, data) { //query DB for user item
+        if (err) {
+            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+        } else {
+            // var r = JSON.stringify(data,null,2);
+            console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+            let r = data["Item"][queryTerm]; //recipe
+
+            let speechOutput = "I didn't find that recipe in your collection. Please try again.";
+            
+            console.log("Recipe should be: ", r);
+            if(r === "undefined"){
+                let sessionAttributes = {
+                    "outputSpeech" : speechOutput
+                };
+                callback(session, buildSpeechletResponseWithoutCard(speechOutput, null, true));
+            } else {
+                speechOutput = {
+                    type: "SSML",
+                    ssml: "<speak>Resuming "+r.displayName+" recipe.<break time='1s'/>"
+                };
+                
+                //Pick up where user left off in recipe
+                speechOutput["ssml"] += r[r.currentSection][r.currentStep]+"</speak>";
+                let reprompt = null;
+                let sessionAttributes = {
+                    "outputSpeech" : speechOutput,
+                    // "repromptText" : reprompt,
+                    "currentRecipe": r
+                };
+                let shouldEndSession = true;
+                
+                //mostly doing this to update _currentRecipe in DB
+                updateRecipeState(userId, r, r["currentSection"], r["currentStep"])
+                    .then(function(result){
+                        console.log("Result is ", result);
+                        sessionAttributes["currentRecipe"] = r;
+                        console.log("SpeechOutput is being passed as ", speechOutput);
+                        callback(sessionAttributes, buildSpeechletResponseWithoutCard(speechOutput, reprompt, shouldEndSession));
+                    },function(err){
+                        console.log("Error with the recipe update ", err);
+                    });
             }
         }
     });
