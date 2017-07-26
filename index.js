@@ -101,7 +101,7 @@ function handleNewUserIfNeccessary(userId){
             console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
         } else {
             console.log("User response:", JSON.stringify(data, null, 2));
-            if(!data["Item"] || data["Item"] === "undefined"){
+            if(!data["Item"] || typeof data["Item"] === "undefined"){
                 console.log("USERID NOT IN DB!");
                 let params = {
                   TableName: table,
@@ -235,7 +235,7 @@ function getRecipeState(userId){
 function updateRecipeState(userId, recipe, section, step){
     console.log("UPDATE RECIPE FIRED");
     let p = new Promise(function(resolve, reject){
-        if(userId && recipe && section && (step !== "undefined")){ //step being 0 is false-y.
+        if(userId && recipe && section && (typeof step !== "undefined")){ //step being 0 is false-y.
             let table = "Recipes";
             let params = {
                 TableName: table,
@@ -289,7 +289,7 @@ function handleStartRecipeIntent(intent, session, callback) {
             let speechOutput = "I didn't find that recipe in your collection. Please try again.";
             
             console.log("Recipe should be: ", r);
-            if(r === "undefined"){
+            if(typeof r === "undefined"){
                 let sessionAttributes = {
                     "outputSpeech" : speechOutput
                 };
@@ -356,7 +356,7 @@ function handleResumeRecipeIntent(intent, session, callback) {
             let speechOutput = "I didn't find that recipe in your collection. Please try again.";
             
             console.log("Recipe should be: ", r);
-            if(r === "undefined"){
+            if(typeof r === "undefined"){
                 let sessionAttributes = {
                     "outputSpeech" : speechOutput
                 };
@@ -403,7 +403,7 @@ function handleRepeatIntent(intent, session, callback) {
     };
     let shouldEndSession = true;
     
-    if(s && _r && _r.currentSection && (_r.currentStep !== "undefined")){
+    if(s && _r && _r.currentSection && (typeof _r.currentStep !== "undefined")){
         sessionAttributes["outputSpeech"] = _r[_r.currentSection][_r.currentStep];
         callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], "What was that?", false));
     } else { //no session info avail
@@ -448,7 +448,7 @@ function handleIngredientIntent(intent, session, callback) {
         }
     };
 
-    if(s && _r && _r.currentSection && (_r.currentStep !== "undefined")){ //if info is already in session, use that
+    if(s && _r && _r.currentSection && (typeof _r.currentStep !== "undefined")){ //if info is already in session, use that
         let ingredients = _r.ingredients;
         if(queryTerm){
             ingredients.forEach(function(ingredient, i){
@@ -467,7 +467,7 @@ function handleIngredientIntent(intent, session, callback) {
             .then(function(result){
                 if(result["Item"]){
                     _r = result["Item"][result["Item"]["_currentRecipe"]];
-                    if(_r === "undefined"){
+                    if(typeof _r === "undefined"){
                         sessionAttributes["outputSpeech"] = "I'm sorry, I couldn't retrieve the recipe you're working on. Please be sure to start the recipe first before asking about an ingredient.";
                         sessionAttributes["currentRecipe"] = null;
                         callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
@@ -547,7 +547,7 @@ function handleDirectionIntent(intent, session, callback) {
                 if(result["Item"]){
                     console.log("result is ", result);
                     r = result["Item"][result["Item"]["_currentRecipe"]];
-                    if(r === "undefined"){
+                    if(typeof r === "undefined"){
                         console.log("r was undefined");
                         sessionAttributes["currentRecipe"] = null;
                         callback(sessionAttributes, buildSpeechletResponseWithoutCard(sessionAttributes["outputSpeech"], null, shouldEndSession));
