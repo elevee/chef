@@ -7,10 +7,16 @@ StartRecipeIntent To start {Recipe}
 StartRecipeIntent Start {Recipe}
 StartRecipeIntent Start {Recipe} recipe
 StartRecipeIntent Start recipe {Recipe}
+StartRecipeIntent To Start {Recipe}
+StartRecipeIntent To Start {Recipe} recipe
+StartRecipeIntent To Start recipe {Recipe}
 StartRecipeIntent Cook {Recipe}
 ResumeRecipeIntent Resume {Recipe}
+ResumeRecipeIntent To Resume {Recipe}
 ResumeRecipeIntent Continue {Recipe}
+ResumeRecipeIntent To Continue {Recipe}
 ResumeRecipeIntent Finish {Recipe}
+ResumeRecipeIntent To Finish {Recipe}
 ResumeRecipeIntent Back to {Recipe}
 ResumeRecipeIntent Switch to {Recipe}
 ResumeRecipeIntent Change to {Recipe}
@@ -28,6 +34,8 @@ IngredientIntent How much {Ingredient}
 IngredientIntent How many {Ingredient}
 IngredientIntent What am I doing with {Ingredient}
 IngredientIntent What to do with {Ingredient}
+IngredientIntent What do I do with {Ingredient}
+NextIntent Next
 NextIntent Next step
 NextIntent What's next
 NextIntent What now

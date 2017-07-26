@@ -24,7 +24,7 @@ var DB 	= new AWS.DynamoDB.DocumentClient();
 
 // var userId 	= "testUser123";
 
-var searchTerm = "citrus_glaze";
+var searchTerm = "ginger_snaps";
 // var searchTerm = "lime_and_cornmeal_cookies";
 var table = "Recipes";
 
@@ -88,6 +88,43 @@ var cookies = {
   "name": "lime_and_cornmeal_cookies"
 }; 
 
+var ginger_snaps = {
+  "ingredients": [
+    "9 1/2 ounces all-purpose flour",
+    "1 1/2 teaspoons baking soda",
+    "1 tablespoon ground ginger",
+    "1/2 teaspoon ground cardamom",
+    "1/2 teaspoon ground clove",
+    "1/2 teaspoon kosher salt",
+    "7 ounces dark brown sugar",
+    "5 ounces unsalted butter, room temperature",
+    "3 ounces molasses, by weight",
+    "1 large egg, room temperature",
+    "2 teaspoons finely grated fresh ginger",
+    "4 ounces finely chopped candied ginger"
+  ],
+  "instructions": [
+    "Preheat the oven to 350 degrees F.",
+    "In a medium mixing bowl whisk together the flour, baking soda, ginger, cardamom, clove and salt.",
+    "Place the brown sugar and butter into the bowl of a stand mixer fitted with the paddle attachment and beat on low speed until light and fluffy, 1 to 2 minutes.",
+    "Add the molasses, egg and fresh ginger and beat on medium for 1 minute.",
+    "Add the crystallized ginger and using a rubber spatula, stir to combine.",
+    "Add the dry ingredients to the wet and stir until well combined.",
+    "With a 2-teaspoon sized scoop, drop the dough onto a parchment lined half sheet pan approximately 2-inches apart.",
+    "Bake on the middle rack of the oven for 12 minutes for slightly chewy cookies or 15 minutes for more crisp cookies.",
+    "Rotate the pan halfway through cooking.",
+    "Remove from the oven and allow the cookies to stay on the sheet pan for 30 seconds before transferring to a wire rack to cool completely.",
+    "Repeat with all of the dough.",
+    "Store in an airtight container for up 10 days.",
+    "If desired, you may scoop and freeze the cookie dough on a sheet pan and once frozen, place in a resealable bag to store.",
+    "Bake directly from the freezer as above."
+  ],
+  "currentSection": "ingredients",
+  "currentStep": 0,
+  "displayName": "Ginger Snaps",
+  "name": "ginger_snaps"
+};
+
 // -------------------------------------------------------------------------------
 // Need to be able to find:
 
@@ -124,18 +161,18 @@ var cookies = {
 // 	});
 
 // TO ADD A RECIPE
-// var params = {
-//   TableName: table,
-//   Key: { "_userId" : userId },
-//   UpdateExpression: 'set #a = :r',
-//   // ConditionExpression: '#a < :MAX',
-//   ExpressionAttributeNames: {'#a': searchTerm},
-//   ExpressionAttributeValues: {
-//     ':r' : cookies
-//   },
-//   ReturnValues:"UPDATED_NEW"
-// };
-// // console.log(params);
+var params = {
+  TableName: table,
+  Key: { "_userId" : userId },
+  UpdateExpression: 'set #a = :r',
+  // ConditionExpression: '#a < :MAX',
+  ExpressionAttributeNames: {'#a': ginger_snaps.name},
+  ExpressionAttributeValues: {
+    ':r' : ginger_snaps
+  },
+  ReturnValues:"UPDATED_NEW"
+};
+console.log(params);
 
 // DB.update(params, function(err, data) {
 //    if (err) console.log(err);
@@ -202,24 +239,24 @@ var cookies = {
 // });
 
 // edit multiple attributes (currentSection, currentStep)
-var newStep = 2;
-var newSection = "ingredients";
+// var newStep = 2;
+// var newSection = "ingredients";
 
-var params = {
-  TableName: table,
-  Key: { "_userId" : userId },
-  UpdateExpression: 'set #c = :rec, #a.currentSection = :x, #a.currentStep = :s',
-ExpressionAttributeNames: {
-    '#a': searchTerm,
-    '#c': "_currentRecipe"
-},
-ExpressionAttributeValues: {
-    ':rec': searchTerm,
-    ':x' : newSection,
-    ':s' : newStep
-},
-  ReturnValues:"ALL_NEW"
-};
+// var params = {
+//   TableName: table,
+//   Key: { "_userId" : userId },
+//   UpdateExpression: 'set #c = :rec, #a.currentSection = :x, #a.currentStep = :s',
+// ExpressionAttributeNames: {
+//     '#a': searchTerm,
+//     '#c': "_currentRecipe"
+// },
+// ExpressionAttributeValues: {
+//     ':rec': searchTerm,
+//     ':x' : newSection,
+//     ':s' : newStep
+// },
+//   ReturnValues:"ALL_NEW"
+// };
 
 // var params = {
 //   TableName: table,
@@ -237,10 +274,10 @@ ExpressionAttributeValues: {
 
 // console.log(params);
 
-DB.update(params, function(err, data) {
-   if (err) console.log(err);
-   else console.log(data);
-});
+// DB.update(params, function(err, data) {
+//    if (err) console.log(err);
+//    else console.log(data);
+// });
 
 // var newUser = "the_juice";
 // var params = {
