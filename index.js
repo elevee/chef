@@ -269,14 +269,18 @@ function updateRecipeState(userId, recipe, section, step){
 
 function handleStartRecipeIntent(intent, session, callback) {
     //if recipe in progress (check session)
-    let userId = session.user.userId;
-    let queryTerm = replaceSpacesAndUnderscores(intent.slots.Recipe.value.trim());
-    let table = "Recipes";
+    let userId      = session.user.userId;
+    let qt          = intent.slots.Recipe.value;
+    let queryTerm   = (qt && typeof qt === "string") ? replaceSpacesAndUnderscores(intent.slots.Recipe.value.trim()) : null;
+    let table       = "Recipes";
     let params = {
         TableName: table,
         Key:{
             "_userId": userId
-        }
+        },
+        AttributesToGet: [
+          queryTerm
+        ]
     };
     DB.get(params, function(err, data) { //query DB for user item
         if (err) {
@@ -336,14 +340,18 @@ function handleStartRecipeIntent(intent, session, callback) {
 }
 
 function handleResumeRecipeIntent(intent, session, callback) {
-    let userId = session.user.userId;
-    let queryTerm = replaceSpacesAndUnderscores(intent.slots.Recipe.value.trim());
+    let userId      = session.user.userId;
+    let qt          = intent.slots.Recipe.value;
+    let queryTerm   = (qt && typeof qt === "string") ? replaceSpacesAndUnderscores(intent.slots.Recipe.value.trim()) : null;
     let table = "Recipes";
     let params = {
         TableName: table,
         Key:{
             "_userId": userId
-        }
+        },
+        AttributesToGet: [
+          queryTerm
+        ]
     };
     DB.get(params, function(err, data) { //query DB for user item
         if (err) {

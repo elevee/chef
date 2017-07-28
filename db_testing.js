@@ -161,41 +161,58 @@ var ginger_snaps = {
 // 	});
 
 // TO ADD A RECIPE
-var params = {
-  TableName: table,
-  Key: { "_userId" : userId },
-  UpdateExpression: 'set #a = :r',
-  // ConditionExpression: '#a < :MAX',
-  ExpressionAttributeNames: {'#a': ginger_snaps.name},
-  ExpressionAttributeValues: {
-    ':r' : ginger_snaps
-  },
-  ReturnValues:"UPDATED_NEW"
-};
-console.log(params);
+// var params = {
+//   TableName: table,
+//   Key: { "_userId" : userId },
+//   UpdateExpression: 'set #a = :r',
+//   // ConditionExpression: '#a < :MAX',
+//   ExpressionAttributeNames: {'#a': ginger_snaps.name},
+//   ExpressionAttributeValues: {
+//     ':r' : ginger_snaps
+//   },
+//   ReturnValues:"UPDATED_NEW"
+// };
+// console.log(params);
 
 // DB.update(params, function(err, data) {
 //    if (err) console.log(err);
 //    else console.log(data);
 // });
 
+// TO DELETE A KEY FROM USER
+// var params = {
+//   TableName : table,
+//   Key: {
+//     HashKey: 'hashkey',
+//     NumberRangeKey: 1
+//   }
+// };
+
+// DB.delete(params, function(err, data) {
+//   if (err) console.log(err);
+//   else console.log(data);
+// });
+
 // -------------------------------------------------------------------------------
 
 // get a user record
-// var params = {
-//     TableName: table,
-//     Key:{
-//         "_userId": userId
-//     }
-// };
+var params = {
+    TableName: table,
+    Key:{
+        "_userId": userId
+    },
+    AttributesToGet: [
+      searchTerm
+    ]
+};
 
-// DB.get(params, function(err, data) {
-//     if (err) {
-//         console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-//     } else {
-//         console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
-//     }
-// });
+DB.get(params, function(err, data) {
+    if (err) {
+        console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+    } else {
+        console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+    }
+});
 
 // get a recipe
 // var params = {
